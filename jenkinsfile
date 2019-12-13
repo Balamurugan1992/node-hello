@@ -11,23 +11,18 @@ pipeline {
     npm_config_cache = 'npm-cache'
   }
   stages {
+       stage("check out") {
+            steps {
+                checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [
+                    [name: '*/master']
+                    ], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [
+                    [url: 'https://github.com/Balamurugan1992/node-hello.git']
+                ]]
+            }
+        }
     stage('Install Packages') {
       steps {
         sh 'npm install'
-      }
-    }
-    stage('Test and Build') {
-      parallel {
-        stage('Run Tests') {
-          steps {
-            sh 'npm run test'
-          }
-        }
-        stage('Create Build Artifacts') {
-          steps {
-            sh 'npm run build'
-          }
-        }
       }
     }
     stage('Deployment') {
@@ -38,8 +33,8 @@ pipeline {
           }
           steps {
             withAWS(region:'ap-south-1',credentials:'aws_key') {
-              s3Delete(bucket: 'mybucket', path:'**/*')
-              s3Upload(bucket: 'testing', workingDir:'build', includePathPattern:'**/*');
+              s3Delete(bucket: 'nodebuckett', path:'**/*')
+              s3Upload(bucket: 'nodebuckett', workingDir:'build', includePathPattern:'**/*');
             }
             mail(subject: 'Staging Build', body: 'New Deployment to Staging', to: 'jenkins-mailing-list@mail.com')
           }
@@ -50,10 +45,10 @@ pipeline {
           }
           steps {
             withAWS(region:'ap-south-1',credentials:'aws_key') {
-              s3Delete(bucket: 'mybucket', path:'**/*')
-              s3Upload(bucket: 'testing', workingDir:'build', includePathPattern:'**/*');
+              s3Delete(bucket: 'nodebuckett', path:'**/*')
+              s3Upload(bucket: 'nodebuckett', workingDir:'build', includePathPattern:'**/*');
             }
-            mail(subject: 'Production Build', body: 'New Deployment to Production', to: 'jenkins-mailing-list@mail.com')
+            mail(subject: 'Production Build', body: 'New Deployment to Production', to: 'developeremail@mail.com')
           }
         }
       }
